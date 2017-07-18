@@ -48,7 +48,7 @@ type Claim struct {
     AssessedDamageValue	int       `json:"assesseddamagevalue"`
     AssessedClaimValue	int       `json:"assessedclaimvalue"`
     Negotiationvalue	[]Negotiation  `json:"negotiationlist"`
-    ApprovedClaim	    int        `json:"approvedclaim"`
+    ApprovedClaim	    int       `json:"approvedclaim"`
 
    }
 
@@ -59,7 +59,7 @@ type ClaimList struct{
 type Document struct{
 
 ClaimId             int      `json:"claimid"`
-FIRCopy             string   `json:"fircopy"`//the fieldtags of User BId are needed to store in the ledger
+FIRCopy             string   `json:"fircopy"`//the fieldtags of User Document hashvalue are needed to store in the ledger
 Photos              string   `json:"photos"`
 Certificates        string   `json:"certificates"`
 
@@ -69,14 +69,14 @@ Certificates        string   `json:"certificates"`
 type Negotiation struct{
 Id                  int      `json:"id"`
 
-Negotiations        int       `json:"negotiationvalue"`//the fieldtags of User BId are needed to store in the ledger
+Negotiations        int       `json:"negotiationvalue"`//the fieldtags of claim Negotiation are needed to store in the ledger
 AsPerTerm2B         string      `json:"asperterm"`
 }
  
 type ExaminedUpdate struct{
 Id                  int       `json:"id"`
 ClaimId             int        `json:"claimid"`
-AssessedDamageValue	int       `json:"assesseddamagevalue"`
+AssessedDamageValue	int       `json:"assesseddamagevalue"`//the field tags of examiner
 AssessedClaimValue	int       `json:"assessedclaimvalue"`
 
 } 
@@ -152,8 +152,11 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	}  else if function == "ExamineClaim" {        //Examine and updtaes the claim with status examined
 		return t.ExamineClaim(stub, args)
 
-	} else if function == "ClaimNegotiation" {        //Examine and updtaes the claim with status examined
+	} else if function == "ClaimNegotiation" {        //claim negotiations takes place between public adjuster and claim adjuster
 		return t.ClaimNegotiation(stub, args)
+
+	} else if function == "approveClaim" {        //after negotiation claim amount is finalised and approved
+		return t.approveClaim(stub, args)
 
 	}
 
@@ -249,6 +252,7 @@ func (t *SimpleChaincode) Delete(stub shim.ChaincodeStubInterface, args []string
 	err = stub.PutState(userIndexStr, jsonAsBytes)
 	return nil, nil
 }
+//notification of claim from insured takes place
 func (t *SimpleChaincode) notifyClaim(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	var err error
 
@@ -309,7 +313,7 @@ UserAsBytes, err := stub.GetState("getclaims")
 	fmt.Println("- end claimlist")
 return nil, nil
 }
-
+//application of claim from insuured takes place after notification
 func (t *SimpleChaincode) createClaim(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	var err error
 
@@ -355,8 +359,7 @@ func (t *SimpleChaincode) createClaim(stub shim.ChaincodeStubInterface, args []s
 	if err != nil {
 		return nil, errors.New("Failed to get PublicAdjusterId as cannot convert it to int")
 	}
-	//fmt.Println("claim",claim)
-//get claims empty[]
+	
 UserAsBytes, err := stub.GetState("getclaims")
 	if err != nil {
 		return nil, errors.New("Failed to get claims")
@@ -390,7 +393,7 @@ claimlist.Claimlist[i].PublicAdjusterId=PublicAdjusterId
 return nil, nil
 }
 
-			
+//upload documents of insured in form of hash takes place			
 
 func (t *SimpleChaincode) UploadDocuments(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	var err error
@@ -420,7 +423,7 @@ func (t *SimpleChaincode) UploadDocuments(stub shim.ChaincodeStubInterface, args
 	
 	document.ClaimId,err  = strconv.Atoi(args[0])
 	if err != nil {
-		return nil, errors.New("Failed to get id as cannot convert it to int")
+		return nil, errors.New("Failed to get ClaimId as cannot convert it to int")
 	}
 	document.FIRCopy = args[1]
 	
@@ -429,7 +432,7 @@ func (t *SimpleChaincode) UploadDocuments(stub shim.ChaincodeStubInterface, args
 
 	
 	fmt.Println("document",document)
-//get claimlist
+
 UserAsBytes, err := stub.GetState("getclaims")
 	if err != nil {
 		return nil, errors.New("Failed to get claims")
@@ -460,13 +463,13 @@ claimlist.Claimlist[i].Documents = append(claimlist.Claimlist[i].Documents,docum
 fmt.Println("- end uploaddocumen")
 return nil, nil
 	}
-
+//examination of claim takes place from examiner
 func (t *SimpleChaincode) ExamineClaim(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	var err error
 
 	
 	if len(args) != 4 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 3")
+		return nil, errors.New("Incorrect number of arguments. Expecting 4")
 	}
 
 	//input sanitation
@@ -507,7 +510,7 @@ func (t *SimpleChaincode) ExamineClaim(stub shim.ChaincodeStubInterface, args []
 
 	
 	fmt.Println("examine",examine)
-//get claimlist
+
 UserAsBytes, err := stub.GetState("getclaims")
 	if err != nil {
 		return nil, errors.New("Failed to get claims")
@@ -538,15 +541,15 @@ claimlist.Claimlist[i].ExaminerId=examine.Id
 	}
 		
 fmt.Println("- end ExaminedDocument")
-return nil, nil //Test
+return nil, nil 
 	}
-
+//claim negotiation between public adjuster and claim adjuster takes place
 func (t *SimpleChaincode) ClaimNegotiation(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	var err error
 
 	
 	if len(args) != 4 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 3")
+		return nil, errors.New("Incorrect number of arguments. Expecting 4")
 	}
 
 	//input sanitation
@@ -577,7 +580,7 @@ func (t *SimpleChaincode) ClaimNegotiation(stub shim.ChaincodeStubInterface, arg
 	}
 	negotiation.Negotiations,err = strconv.Atoi(args[2])
 	if err != nil {
-		return nil, errors.New("Failed to get Negotiation as cannot convert it to int")
+		return nil, errors.New("Failed to get Negotiations as cannot convert it to int")
 	}
 	negotiation.AsPerTerm2B=args[3]
 
@@ -586,7 +589,7 @@ func (t *SimpleChaincode) ClaimNegotiation(stub shim.ChaincodeStubInterface, arg
 
 	
 	fmt.Println("negotiation",negotiation)
-//get claimlist
+
 UserAsBytes, err := stub.GetState("getclaims")
 	if err != nil {
 		return nil, errors.New("Failed to get claims")
@@ -620,5 +623,68 @@ claimlist.Claimlist[i].Negotiationvalue = append(claimlist.Claimlist[i].Negotiat
 	}
 		
 fmt.Println("- end Negotiation")
-return nil, nil //Test
+return nil, nil 
+	}
+//after negotiation claim amount will be finalised and approved
+func (t *SimpleChaincode) approveClaim(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	var err error
+
+	
+	if len(args) != 1 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 1")
+	}
+
+	//input sanitation
+	fmt.Println("- start ClaimNegotiation")
+	if len(args[0]) <= 0 {
+		return nil, errors.New("1st argument must be a non-empty string")
+	}
+	
+	
+	
+	
+	
+	ClaimId,err  := strconv.Atoi(args[0])
+	if err != nil {
+		return nil, errors.New("Failed to get ClaimId as cannot convert it to int")
+	}
+	
+
+	Status:="ClaimFinalised"
+	
+
+	
+	
+UserAsBytes, err := stub.GetState("getclaims")
+	if err != nil {
+		return nil, errors.New("Failed to get claims")
+	}
+	
+	var claimlist ClaimList
+	json.Unmarshal(UserAsBytes, &claimlist)	//un stringify it aka JSON.parse()
+	
+	
+		for i:=0;i<len(claimlist.Claimlist);i++{
+		
+		
+	if(claimlist.Claimlist[i].ClaimNo==ClaimId){
+		if(claimlist.Claimlist[i].Negotiationvalue[(len(claimlist.Claimlist[i].Negotiationvalue)-1)].Negotiations==claimlist.Claimlist[i].Negotiationvalue[(len(claimlist.Claimlist[i].Negotiationvalue)-2)].Negotiations ){
+                 claimlist.Claimlist[i].Status=Status
+              lastindex := (len(claimlist.Claimlist[i].Negotiationvalue) - 1)
+                lastnegotiation := claimlist.Claimlist[i].Negotiationvalue[lastindex]
+                claimlist.Claimlist[i].ApprovedClaim = lastnegotiation.Negotiations
+
+
+}
+	}
+	jsonAsBytes, _ := json.Marshal(claimlist)
+	fmt.Println("json",jsonAsBytes)
+	err = stub.PutState("getclaims", jsonAsBytes)								
+	if err != nil {
+		return nil, err
+	}
+	}
+		
+fmt.Println("- end approve claim")
+return nil, nil 
 	}
