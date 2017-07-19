@@ -23,7 +23,7 @@ import (
 	"strconv"
 	//"time"
 	//"strings"
-	
+	//"reflect"
 
 	
      
@@ -34,11 +34,11 @@ var userIndexStr = "_userindex"
 
 
 type Claim struct {
-	Id                  int      `json:"userid"`
+	Id                  string      `json:"userid"`
     ClaimNo             int      `json:"claimno"`
-	ExaminerId          int      `json:"examinerid"`
-	ClaimAdjusterId     int      `json:"claimadjusterid"`
-	PublicAdjusterId    int      `json:"publicadjusterid"`
+	ExaminerId          string      `json:"examinerid"`
+	ClaimAdjusterId     string      `json:"claimadjusterid"`
+	PublicAdjusterId    string      `json:"publicadjusterid"`
 	Status   	        string   `json:"status"`
 	Title	            string   `json:"title"`
     DamageDetails	        string   `json:"damagedetails"`
@@ -67,14 +67,14 @@ Certificates        string   `json:"certificates"`
 }
 
 type Negotiation struct{
-Id                  int      `json:"id"`
+Id                  string      `json:"id"`
 
 Negotiations        int       `json:"negotiationvalue"`//the fieldtags of claim Negotiation are needed to store in the ledger
 AsPerTerm2B         string      `json:"asperterm"`
 }
  
 type ExaminedUpdate struct{
-Id                  int       `json:"id"`
+Id                  string       `json:"id"`
 ClaimId             int        `json:"claimid"`
 AssessedDamageValue	int       `json:"assesseddamagevalue"`//the field tags of examiner
 AssessedClaimValue	int       `json:"assessedclaimvalue"`
@@ -278,10 +278,7 @@ func (t *SimpleChaincode) notifyClaim(stub shim.ChaincodeStubInterface, args []s
 		
 	
 	claim:=Claim{}
-	claim.Id, err = strconv.Atoi(args[0])
-	if err != nil {
-		return nil, errors.New("Failed to get id as cannot convert it to int")
-	}
+	claim.Id = args[0]
 
 	claim.ClaimNo, err = strconv.Atoi(args[1])
 	if err != nil {
@@ -355,10 +352,8 @@ func (t *SimpleChaincode) createClaim(stub shim.ChaincodeStubInterface, args []s
 		return nil, errors.New("Failed to get TotalClaimValue as cannot convert it to int")
 	}
     Status:="approved"
-	PublicAdjusterId,err:=strconv.Atoi(args[3])
-	if err != nil {
-		return nil, errors.New("Failed to get PublicAdjusterId as cannot convert it to int")
-	}
+	PublicAdjusterId :=args[3]
+	
 	
 UserAsBytes, err := stub.GetState("getclaims")
 	if err != nil {
@@ -489,10 +484,8 @@ func (t *SimpleChaincode) ExamineClaim(stub shim.ChaincodeStubInterface, args []
 	
 	
 	examine:=ExaminedUpdate{}
-	examine.Id,err = strconv.Atoi(args[0])
-	if err != nil {
-		return nil, errors.New("Failed to get id as cannot convert it to int")
-	}
+	examine.Id = args[0]
+	
 	examine.ClaimId,err  = strconv.Atoi(args[1])
 	if err != nil {
 		return nil, errors.New("Failed to get ClaimId as cannot convert it to int")
@@ -570,10 +563,8 @@ func (t *SimpleChaincode) ClaimNegotiation(stub shim.ChaincodeStubInterface, arg
 	
 	
 	negotiation:=Negotiation{}
-	negotiation.Id,err = strconv.Atoi(args[0])
-	if err != nil {
-		return nil, errors.New("Failed to get id as cannot convert it to int")
-	}
+	negotiation.Id = args[0]
+	
 	ClaimId,err  := strconv.Atoi(args[1])
 	if err != nil {
 		return nil, errors.New("Failed to get ClaimId as cannot convert it to int")
