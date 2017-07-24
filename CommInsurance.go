@@ -21,7 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	//"time"
+	"time"
 	//"strings"
 	//"reflect"
 
@@ -45,10 +45,17 @@ type Claim struct {
     TotalDamageValue 	int      `json:"totaldamagevalue"`
     TotalClaimValue 	int      `json:"totalclaimvalue"`
 	Documents	        []Document   `json:"document"`
+	ClaimNotifiedDate   time.Time     `json:"claimnotifieddate"`
+	ClaimSubmittedDate  time.Time       `json:"claimsubmitteddate"`
+	
     AssessedDamageValue	int       `json:"assesseddamagevalue"`
     AssessedClaimValue	int       `json:"assessedclaimvalue"`
+	ClaimExaminedDate  time.Time     `json:"claimexamineddate"`
+    ClaimValidatedDate   time.Time     `json:"claimvalidateddate"`
     Negotiationvalue	[]Negotiation  `json:"negotiationlist"`
     ApprovedClaim	    int       `json:"approvedclaim"`
+	ClaimApprovedDate   time.Time      `json:"claimapproveddate"`
+	ClaimSettledDate   time.Time     `json:"claimsettleddate"`
 
    }
 
@@ -157,6 +164,9 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 
 	} else if function == "approveClaim" {        //after negotiation claim amount is finalised and approved
 		return t.approveClaim(stub, args)
+
+	} else if function == "settleClaim" {        //after negotiation claim amount is finalised and approved
+		return t.settleClaim(stub, args)
 
 	}
 
@@ -287,6 +297,7 @@ func (t *SimpleChaincode) notifyClaim(stub shim.ChaincodeStubInterface, args []s
 	
 	claim.Title = args[2]
 	claim.DamageDetails=args[3]
+	claim.ClaimNotifiedDate=time.Now()
     claim.Status="Notified"
 	
 	fmt.Println("claim",claim)
@@ -353,6 +364,7 @@ func (t *SimpleChaincode) createClaim(stub shim.ChaincodeStubInterface, args []s
 	}
     Status:="Submitted"
 	PublicAdjusterId :=args[3]
+	ClaimSubmittedDate:=time.Now()
 	
 	
 UserAsBytes, err := stub.GetState("getclaims")
@@ -374,6 +386,7 @@ claimlist.Claimlist[i].TotalClaimValue = TotalClaimValue
 	
 claimlist.Claimlist[i].Status=Status
 claimlist.Claimlist[i].PublicAdjusterId=PublicAdjusterId
+claimlist.Claimlist[i].ClaimSubmittedDate=ClaimSubmittedDate
 }
 	
 	
@@ -499,7 +512,7 @@ func (t *SimpleChaincode) ExamineClaim(stub shim.ChaincodeStubInterface, args []
 		return nil, errors.New("Failed to get AssessedClaimValue as cannot convert it to int")
 	}
     Status:="Examined"
-	
+	ClaimExaminedDate:=time.Now()
 
 	
 	fmt.Println("examine",examine)
@@ -522,6 +535,7 @@ claimlist.Claimlist[i].AssessedDamageValue = examine.AssessedDamageValue
 claimlist.Claimlist[i].AssessedClaimValue = examine.AssessedClaimValue
 claimlist.Claimlist[i].Status=Status
 claimlist.Claimlist[i].ExaminerId=examine.Id
+claimlist.Claimlist[i].ClaimExaminedDate=ClaimExaminedDate
 }
 	
 	
@@ -576,6 +590,7 @@ func (t *SimpleChaincode) ClaimNegotiation(stub shim.ChaincodeStubInterface, arg
 	negotiation.AsPerTerm2B=args[3]
 
 	Status:="Validated"
+	ClaimValidatedDate:=time.Now()
 	
 
 	
@@ -598,11 +613,11 @@ UserAsBytes, err := stub.GetState("getclaims")
 claimlist.Claimlist[i].Status=Status
 claimlist.Claimlist[i].ClaimAdjusterId=negotiation.Id
 claimlist.Claimlist[i].Negotiationvalue = append(claimlist.Claimlist[i].Negotiationvalue,negotiation);
-
+claimlist.Claimlist[i].ClaimValidatedDate=ClaimValidatedDate
 }else {
 claimlist.Claimlist[i].Status=Status
 claimlist.Claimlist[i].Negotiationvalue = append(claimlist.Claimlist[i].Negotiationvalue,negotiation);
-
+claimlist.Claimlist[i].ClaimValidatedDate=ClaimValidatedDate
 }
 	}
 	jsonAsBytes, _ := json.Marshal(claimlist)
@@ -626,7 +641,7 @@ func (t *SimpleChaincode) approveClaim(stub shim.ChaincodeStubInterface, args []
 	}
 
 	//input sanitation
-	fmt.Println("- start ClaimNegotiation")
+	fmt.Println("- start approveClaim")
 	if len(args[0]) <= 0 {
 		return nil, errors.New("1st argument must be a non-empty string")
 	}
@@ -641,8 +656,8 @@ func (t *SimpleChaincode) approveClaim(stub shim.ChaincodeStubInterface, args []
 	}
 	
 
-	Status:="Settled"
-	
+	Status:="Approved"
+	ClaimApprovedDate:=time.Now()
 
 	
 	
@@ -661,6 +676,7 @@ UserAsBytes, err := stub.GetState("getclaims")
 	if(claimlist.Claimlist[i].ClaimNo==ClaimId){
 		if(claimlist.Claimlist[i].Negotiationvalue[(len(claimlist.Claimlist[i].Negotiationvalue)-1)].Negotiations==claimlist.Claimlist[i].Negotiationvalue[(len(claimlist.Claimlist[i].Negotiationvalue)-2)].Negotiations ){
                  claimlist.Claimlist[i].Status=Status
+				 claimlist.Claimlist[i].ClaimApprovedDate=ClaimApprovedDate
               lastindex := (len(claimlist.Claimlist[i].Negotiationvalue) - 1)
                 lastnegotiation := claimlist.Claimlist[i].Negotiationvalue[lastindex]
                 claimlist.Claimlist[i].ApprovedClaim = lastnegotiation.Negotiations
@@ -677,5 +693,69 @@ UserAsBytes, err := stub.GetState("getclaims")
 	}
 		
 fmt.Println("- end approve claim")
+return nil, nil 
+	}
+
+
+func (t *SimpleChaincode) settleClaim(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	var err error
+
+	
+	if len(args) != 1 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 1")
+	}
+
+	//input sanitation
+	fmt.Println("- start settleClaim")
+	if len(args[0]) <= 0 {
+		return nil, errors.New("1st argument must be a non-empty string")
+	}
+	
+	
+	
+	
+	
+	ClaimId,err  := strconv.Atoi(args[0])
+	if err != nil {
+		return nil, errors.New("Failed to get ClaimId as cannot convert it to int")
+	}
+	
+
+	Status:="Settled"
+	ClaimSettledDate:=time.Now()
+
+	
+	
+UserAsBytes, err := stub.GetState("getclaims")
+	if err != nil {
+		return nil, errors.New("Failed to get claims")
+	}
+	
+	var claimlist ClaimList
+	json.Unmarshal(UserAsBytes, &claimlist)	//un stringify it aka JSON.parse()
+	
+	
+
+		
+		
+	for i:=0;i<len(claimlist.Claimlist);i++{
+		
+		
+	if(claimlist.Claimlist[i].ClaimNo==ClaimId){
+
+
+claimlist.Claimlist[i].Status=Status
+
+claimlist.Claimlist[i].ClaimSettledDate=ClaimSettledDate
+}
+	jsonAsBytes, _ := json.Marshal(claimlist)
+	fmt.Println("json",jsonAsBytes)
+	err = stub.PutState("getclaims", jsonAsBytes)								
+	if err != nil {
+		return nil, err
+	}
+	}
+		
+fmt.Println("- end settled claim")
 return nil, nil 
 	}
