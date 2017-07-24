@@ -287,7 +287,7 @@ func (t *SimpleChaincode) notifyClaim(stub shim.ChaincodeStubInterface, args []s
 	
 	claim.Title = args[2]
 	claim.DamageDetails=args[3]
-    claim.Status="Notify"
+    claim.Status="Notified"
 	
 	fmt.Println("claim",claim)
 //get claims empty[]
@@ -351,7 +351,7 @@ func (t *SimpleChaincode) createClaim(stub shim.ChaincodeStubInterface, args []s
 	if err != nil {
 		return nil, errors.New("Failed to get TotalClaimValue as cannot convert it to int")
 	}
-    Status:="approved"
+    Status:="Submitted"
 	PublicAdjusterId :=args[3]
 	
 	
@@ -641,7 +641,7 @@ func (t *SimpleChaincode) approveClaim(stub shim.ChaincodeStubInterface, args []
 	}
 	
 
-	Status:="ClaimFinalised"
+	Status:="Settled"
 	
 
 	
