@@ -47,7 +47,7 @@ type Claim struct {
 	Documents	        []Document   `json:"document"`
 	ClaimNotifiedDate   time.Time     `json:"claimnotifieddate"`
 	ClaimSubmittedDate  time.Time       `json:"claimsubmitteddate"`
-	
+	Remark string `json:"remark"`
     AssessedDamageValue	int       `json:"assesseddamagevalue"`
     AssessedClaimValue	int       `json:"assessedclaimvalue"`
 	ClaimExaminedDate  time.Time     `json:"claimexamineddate"`
@@ -156,7 +156,10 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	} else if function == "UploadDocuments" {        //upload the dcument hash value 
 		return t.UploadDocuments(stub, args)
 
-	}  else if function == "ExamineClaim" {        //Examine and updtaes the claim with status examined
+	} else if function == "rejectClaim" { //upload the dcument hash value 
+        return t.rejectClaim(stub, args)
+
+    } else if function == "ExamineClaim" {        //Examine and updtaes the claim with status examined
 		return t.ExamineClaim(stub, args)
 
 	} else if function == "ClaimNegotiation" {        //claim negotiations takes place between public adjuster and claim adjuster
@@ -471,6 +474,73 @@ claimlist.Claimlist[i].Documents = append(claimlist.Claimlist[i].Documents,docum
 fmt.Println("- end uploaddocumen")
 return nil, nil
 	}
+
+
+func(t * SimpleChaincode) rejectClaim(stub shim.ChaincodeStubInterface, args[] string)([] byte, error) {
+    var err error
+
+
+    if len(args) != 2 {
+        return nil, errors.New("Incorrect number of arguments. Expecting 2")
+    }
+
+    //input sanitation
+    fmt.Println("- start rejectClaim")
+    if len(args[0]) <= 0 {
+        return nil, errors.New("1st argument must be a non-empty string")
+    }
+	if len(args[1]) <= 0 {
+        return nil, errors.New("2nd argument must be a non-empty string")
+    }
+
+
+
+
+    ClaimId, err := strconv.Atoi(args[0])
+    if err != nil {
+        return nil, errors.New("Failed to get ClaimId as cannot convert it to int")
+    }
+    Remark := args[1]
+
+    Status := "Rejected"
+
+
+
+
+    UserAsBytes, err := stub.GetState("getclaims")
+    if err != nil {
+        return nil, errors.New("Failed to get claims")
+    }
+
+    var claimlist ClaimList
+    json.Unmarshal(UserAsBytes, & claimlist) //un stringify it aka JSON.parse()
+
+
+
+
+    for i := 0;i < len(claimlist.Claimlist);i++{
+
+
+        if(claimlist.Claimlist[i].ClaimNo == ClaimId) {
+
+
+            claimlist.Claimlist[i].Status = Status
+            claimlist.Claimlist[i].Remark = Remark
+
+        }
+        jsonAsBytes, _:= json.Marshal(claimlist)
+        fmt.Println("json", jsonAsBytes)
+        err = stub.PutState("getclaims", jsonAsBytes)
+        if err != nil {
+            return nil, err
+        }
+    }
+
+    fmt.Println("- end reject claim")
+    return nil, nil
+}
+
+
 //examination of claim takes place from examiner
 func (t *SimpleChaincode) ExamineClaim(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	var err error
