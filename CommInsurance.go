@@ -744,7 +744,15 @@ UserAsBytes, err := stub.GetState("getclaims")
 		
 		
 	if(claimlist.Claimlist[i].ClaimNo==ClaimId){
-		if(claimlist.Claimlist[i].Negotiationvalue[(len(claimlist.Claimlist[i].Negotiationvalue)-1)].Negotiations==claimlist.Claimlist[i].Negotiationvalue[(len(claimlist.Claimlist[i].Negotiationvalue)-2)].Negotiations ){
+		index:=len(claimlist.Claimlist[i].Negotiationvalue) 
+		if(index==1){
+                claimlist.Claimlist[i].Status=Status
+				 claimlist.Claimlist[i].ClaimApprovedDate=ClaimApprovedDate
+              onlyindex := (index - 1)
+                onlynegotiation := claimlist.Claimlist[i].Negotiationvalue[onlyindex]
+                claimlist.Claimlist[i].ApprovedClaim = onlynegotiation.Negotiations
+
+		}else if(claimlist.Claimlist[i].Negotiationvalue[(len(claimlist.Claimlist[i].Negotiationvalue)-1)].Negotiations==claimlist.Claimlist[i].Negotiationvalue[(len(claimlist.Claimlist[i].Negotiationvalue)-2)].Negotiations ){
                  claimlist.Claimlist[i].Status=Status
 				 claimlist.Claimlist[i].ClaimApprovedDate=ClaimApprovedDate
               lastindex := (len(claimlist.Claimlist[i].Negotiationvalue) - 1)
