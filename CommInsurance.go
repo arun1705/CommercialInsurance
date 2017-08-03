@@ -751,7 +751,14 @@ UserAsBytes, err := stub.GetState("getclaims")
               onlyindex := (index - 1)
                 onlynegotiation := claimlist.Claimlist[i].Negotiationvalue[onlyindex]
                 claimlist.Claimlist[i].ApprovedClaim = onlynegotiation.Negotiations
-
+        
+		}else if(index==2){
+                claimlist.Claimlist[i].Status=Status
+				 claimlist.Claimlist[i].ClaimApprovedDate=ClaimApprovedDate
+                onlyindex := (index - 1)
+                onlynegotiation := claimlist.Claimlist[i].Negotiationvalue[onlyindex]
+                claimlist.Claimlist[i].ApprovedClaim = onlynegotiation.Negotiations
+        
 		}else if(claimlist.Claimlist[i].Negotiationvalue[(len(claimlist.Claimlist[i].Negotiationvalue)-1)].Negotiations==claimlist.Claimlist[i].Negotiationvalue[(len(claimlist.Claimlist[i].Negotiationvalue)-2)].Negotiations ){
                  claimlist.Claimlist[i].Status=Status
 				 claimlist.Claimlist[i].ClaimApprovedDate=ClaimApprovedDate
