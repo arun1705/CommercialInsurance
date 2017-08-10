@@ -329,7 +329,7 @@ func (t *SimpleChaincode) createClaim(stub shim.ChaincodeStubInterface, args []s
 	var err error
 
 	
-		if len(args) != 4 {
+		if len(args) != 3 {
 			return nil, errors.New("Incorrect number of arguments. Expecting 4")
 		}
 
@@ -344,9 +344,7 @@ func (t *SimpleChaincode) createClaim(stub shim.ChaincodeStubInterface, args []s
 		if len(args[2]) <= 0 {
 			return nil, errors.New("1st argument must be a non-empty string")
 		}
-		if len(args[3]) <= 0 {
-			return nil, errors.New("1st argument must be a non-empty string")
-		}
+		
 		
 		
 	
@@ -366,7 +364,7 @@ func (t *SimpleChaincode) createClaim(stub shim.ChaincodeStubInterface, args []s
 		return nil, errors.New("Failed to get TotalClaimValue as cannot convert it to int")
 	}
     Status:="Submitted"
-	PublicAdjusterId :=args[3]
+	
 	ClaimSubmittedDate:=time.Now()
 	
 	
@@ -388,7 +386,7 @@ claimlist.Claimlist[i].TotalDamageValue = TotalDamageValue
 claimlist.Claimlist[i].TotalClaimValue = TotalClaimValue
 	
 claimlist.Claimlist[i].Status=Status
-claimlist.Claimlist[i].PublicAdjusterId=PublicAdjusterId
+
 claimlist.Claimlist[i].ClaimSubmittedDate=ClaimSubmittedDate
 }
 	
