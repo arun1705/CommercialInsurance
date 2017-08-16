@@ -75,7 +75,6 @@ Certificates        string   `json:"certificates"`
 
 type Negotiation struct{
 Id                  string      `json:"id"`
-
 Negotiations        int       `json:"negotiationvalue"`//the fieldtags of claim Negotiation are needed to store in the ledger
 AsPerTerm2B         string      `json:"asperterm"`
 }
@@ -305,7 +304,7 @@ func (t *SimpleChaincode) notifyClaim(stub shim.ChaincodeStubInterface, args []s
 	
 	fmt.Println("claim",claim)
 //get claims empty[]
-UserAsBytes, err := stub.GetState("getclaims")
+    UserAsBytes, err := stub.GetState("getclaims")
 	if err != nil {
 		return nil, errors.New("Failed to get claims")
 	}
@@ -370,7 +369,7 @@ func (t *SimpleChaincode) createClaim(stub shim.ChaincodeStubInterface, args []s
 	ClaimSubmittedDate:=time.Now()
 	
 	
-UserAsBytes, err := stub.GetState("getclaims")
+    UserAsBytes, err := stub.GetState("getclaims")
 	if err != nil {
 		return nil, errors.New("Failed to get claims")
 	}
@@ -443,7 +442,7 @@ func (t *SimpleChaincode) UploadDocuments(stub shim.ChaincodeStubInterface, args
 	
 	fmt.Println("document",document)
 
-UserAsBytes, err := stub.GetState("getclaims")
+    UserAsBytes, err := stub.GetState("getclaims")
 	if err != nil {
 		return nil, errors.New("Failed to get claims")
 	}
@@ -678,7 +677,7 @@ UserAsBytes, err := stub.GetState("getclaims")
 		
 		
 	if(claimlist.Claimlist[i].ClaimNo==ClaimId){
-		if(claimlist.Claimlist[0].Negotiationvalue== nil){
+		if(claimlist.Claimlist[0].Negotiationvalue == nil){
 claimlist.Claimlist[i].Status=Status
 claimlist.Claimlist[i].ClaimAdjusterId=negotiation.Id
 claimlist.Claimlist[i].Negotiationvalue = append(claimlist.Claimlist[i].Negotiationvalue,negotiation);
